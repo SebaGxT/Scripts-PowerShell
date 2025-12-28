@@ -219,8 +219,12 @@ if (Test-Path ".nvmrc") {
     Write-Host "[INFO] Archivo .nvmrc encontrado con versión: $nvmrcVersion" -ForegroundColor Cyan
     $useNvmrc = Read-Host "¿Usar esta versión? (S/N, Enter=Sí)"
     if ([string]::IsNullOrWhiteSpace($useNvmrc) -or $useNvmrc -eq "S" -or $useNvmrc -eq "s") {
-        $nodeVersions += $nvmrcVersion
-        Write-Host "[OK] Usando versión de .nvmrc: $nvmrcVersion" -ForegroundColor Green
+        if ($nvmrcVersion -match '^\d+\.\d+\.\d+$') {
+            $nodeVersions += $nvmrcVersion
+            Write-Host "[OK] Usando versión de .nvmrc: $nvmrcVersion" -ForegroundColor Green
+        } else {
+            Write-Host "[ERROR] La versión en .nvmrc no es válida: $nvmrcVersion" -ForegroundColor Red
+        }
     }
 }
 
@@ -238,7 +242,13 @@ $manualInput = Read-Host "Versiones"
 
 if (-not [string]::IsNullOrWhiteSpace($manualInput)) {
     $manualVersions = $manualInput -split "," | ForEach-Object { $_.Trim() } | Where-Object { $_ }
-    $nodeVersions += $manualVersions
+    foreach ($ver in $manualVersions) {
+        if ($ver -match '^\d+\.\d+\.\d+$') {
+            $nodeVersions += $ver
+        } else {
+            Write-Host "[ERROR] Versión inválida: $ver" -ForegroundColor Red
+        }
+    }
 }
 
 if ($nodeVersions.Count -eq 0) {
@@ -267,6 +277,24 @@ if ([string]::IsNullOrWhiteSpace($npmVersion)) {
     } catch {
         Write-Host "[ERROR] No se pudo obtener la última versión de npm" -ForegroundColor Red
         $npmVersion = Read-Host "Ingresa versión de npm manualmente (ej: 10.9.4)"
+    }
+}
+
+# Validar formato de versión de npm o aceptar 'latest'
+if (-not [string]::IsNullOrWhiteSpace($npmVersion)) {
+    if ($npmVersion -eq "latest") {
+        Write-Host "[INFO] Usando la última versión de npm (latest)" -ForegroundColor Cyan
+        try {
+            $npmLatestInfo = Invoke-RestMethod -Uri "https://registry.npmjs.org/npm/latest" -TimeoutSec 10
+            $npmVersion = $npmLatestInfo.version
+            Write-Host "[OK] Última versión de npm: $npmVersion" -ForegroundColor Green
+        } catch {
+            Write-Host "[ERROR] No se pudo obtener la última versión de npm" -ForegroundColor Red
+            exit 1
+        }
+    } elseif ($npmVersion -notmatch '^\d+\.\d+\.\d+$') {
+        Write-Host "[ERROR] Versión de npm inválida: $npmVersion" -ForegroundColor Red
+        exit 1
     }
 }
 
