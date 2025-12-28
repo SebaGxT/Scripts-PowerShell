@@ -1,7 +1,37 @@
 # ========================================
 # Script: Instalador y Reparador de Node.js + npm con nvm
-# Versión: 2.0.1
+# Versión: 2.0.3
 # Descripción: Instala versiones de Node.js con nvm y repara npm si está corrupto
+# ========================================
+
+# ========================================
+# Funciones
+# ========================================
+
+function Show-Message {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Text,
+
+        [Parameter()]
+        [ValidateSet("Info","Ok","Error","Custom")]
+        [string]$Type = "Info",
+
+        [string]$CustomColor = "White"
+    )
+
+    switch ($Type) {
+        "Info"  { $color = "Cyan";   $prefix = "[INFO]" }
+        "Ok"    { $color = "Green";  $prefix = "[OK]" }
+        "Error" { $color = "Red";    $prefix = "[ERROR]" }
+        "Custom"{ $color = $CustomColor; $prefix = "[MSG]" }
+        default { $color = "White";  $prefix = "[MSG]" }
+    }
+
+    Write-Host "$prefix $Text" -ForegroundColor $color
+}
+
+
 # ========================================
 
 $ErrorActionPreference = 'Continue'
@@ -12,31 +42,31 @@ $ErrorActionPreference = 'Continue'
 # ========================================
 $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host " Instalador de Node.js + npm (nvm)" -ForegroundColor Cyan
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host ""
+Show-Message "========================================" Info
+Show-Message " Instalador de Node.js + npm (nvm)" Info
+Show-Message "========================================" Info
+Show-Message ""
 
 if (-not $isAdmin) {
-    Write-Host "[ADVERTENCIA] Este script NO se está ejecutando como Administrador" -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "Si necesitas reparar npm corrupto, se requieren permisos elevados" -ForegroundColor Yellow
-    Write-Host "para modificar archivos en C:\ProgramData\NVM\" -ForegroundColor Gray
-    Write-Host ""
+    Show-Message "[ADVERTENCIA] Este script NO se está ejecutando como Administrador" Custom -CustomColor Yellow
+    Show-Message ""
+    Show-Message "Si necesitas reparar npm corrupto, se requieren permisos elevados" Custom -CustomColor Yellow
+    Show-Message "para modificar archivos en C:\ProgramData\NVM\" Custom -CustomColor Gray
+    Show-Message ""
     $continue = Read-Host "¿continuar de todos modos? (S/N, Enter=No)"
     if ($continue -ne "S" -and $continue -ne "s") {
-        Write-Host ""
-        Write-Host "Para ejecutar como Administrador:" -ForegroundColor Cyan
-        Write-Host "1. Click derecho en PowerShell" -ForegroundColor Gray
-        Write-Host "2. Selecciona 'Ejecutar como administrador" -ForegroundColor Gray
-        Write-Host "3. Ejecuta este script nuevamente" -ForegroundColor Gray
-        Write-Host ""
+        Show-Message ""
+        Show-Message "Para ejecutar como Administrador:" Info
+        Show-Message "1. Click derecho en PowerShell" Custom -CustomColor Gray
+        Show-Message "2. Selecciona 'Ejecutar como administrador" Custom -CustomColor Gray
+        Show-Message "3. Ejecuta este script nuevamente" Custom -CustomColor Gray
+        Show-Message ""
         exit 0
     }
-    Write-Host ""
+    Show-Message ""
 } else {
-    Write-Host "[OK] Ejecutando con permisos de Administrador" -ForegroundColor Green
-    Write-Host ""
+    Show-Message "[OK] Ejecutando con permisos de Administrador" Ok
+    Show-Message ""
 }
 
 # ========================================
@@ -47,10 +77,10 @@ try {
     [void](nvm version 2>&1)
     if ($LASTEXITCODE -ne 0) { throw }
     $nvmInPath = $true
-    Write-Host "[OK] nvm está instalado y accesible" -ForegroundColor Green
+    Show-Message "[OK] nvm está instalado y accesible" Ok
 } catch {
-    Write-Host "[ADVERTENCIA] nvm no responde al comando 'nvm'" -ForegroundColor Yellow
-    Write-Host "Verificando si nvm está instalado pero no está en PATH..." -ForegroundColor Cyan
+    Show-Message "[ADVERTENCIA] nvm no responde al comando 'nvm'" Custom -CustomColor Yellow
+    Show-Message "Verificando si nvm está instalado pero no está en PATH..." Info
 
     # Buscar nvm.exe en ubicaciones comunes
     $nvmPossiblePaths = @(
@@ -66,14 +96,14 @@ try {
         if ($path -and (Test-Path $path)) {
             $nvmExePath = $path
             $nvmDir = Split-Path $nvmExePath -Parent
-            Write-Host "[OK] nvm encontrado en: $nvmDir" -ForegroundColor Green
+            Show-Message "[OK] nvm encontrado en: $nvmDir" Ok
             break
         }
     }
 
     if ($nvmExePath) {
         # nvm existe pero no está en PATH, agregarlo
-        Write-Host "[ACCIÓN] Agregando nvm al PATH del usuario..." -ForegroundColor Cyan
+        Show-Message "[ACCIÓN] Agregando nvm al PATH del usuario..." Info
 
         $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
         $nvmDir = Split-Path $nvmExePath -Parent
@@ -85,8 +115,8 @@ try {
             # Actualizar PATH de la sesión actual
             $env:Path = "$env:Path,$nvmDir"
 
-            Write-Host "[OK] nvm agregado al PATH del usuario" -ForegroundColor Green
-            Write-Host "Variable NVM_HOME configurada como: $nvmDir" -ForegroundColor Gray
+            Show-Message "[OK] nvm agregado al PATH del usuario" Ok
+            Show-Message "Variable NVM_HOME configurada como: $nvmDir" Custom -CustomColor Gray
 
             # Configurar NVM_HOME si no existe
             if (-not $env:NVM_HOME) {
@@ -98,21 +128,21 @@ try {
             try {
                 [void](nvm version 2>&1)
                 if ($LASTEXITCODE -eq 0) {
-                    Write-Host "[OK] nvm ahora está accesible" -ForegroundColor Green
+                    Show-Message "[OK] nvm ahora está accesible" Ok
                     $nvmInPath = $true
                 }
             } catch {}
         }
     } else {
-        Write-Host "[ERROR] nvm no está instalado en este sistema" -ForegroundColor Red
-        Write-Host "Instala nvm-windows desde: https://github.com/coreybutler/nvm-windows/releases" -ForegroundColor Yellow
+        Show-Message "[ERROR] nvm no está instalado en este sistema" Error
+        Show-Message "Instala nvm-windows desde: https://github.com/coreybutler/nvm-windows/releases" Custom -CustomColor Yellow
         exit 1
     }
 }
 
 if (-not $nvmInPath) {
-    Write-Host "[ERROR] nvm no pudo ser configurado correctamente" -ForegroundColor Red
-    Write-Host "Cierra esta ventana y abre una nueva terminal para que los cambios surtan efecto" -ForegroundColor Yellow
+    Show-Message "[ERROR] nvm no pudo ser configurado correctamente" Error
+    Show-Message "Cierra esta ventana y abre una nueva terminal para que los cambios surtan efecto" Custom -CustomColor Yellow
     exit 1
 }
 
@@ -121,7 +151,7 @@ if (-not $nvmInPath) {
 # ========================================
 
 # PRIMERO: Verificar nvm root actual (lo que realmente está usando nvm)
-Write-Host "[INFO] Detectando ubicación actual de nvm..." -ForegroundColor Cyan
+Show-Message "[INFO] Detectando ubicación actual de nvm..." Info
 $nvmBase = $null
 
 try {
@@ -130,19 +160,19 @@ try {
     if ($currentRootLine) {
         $nvmBase = $currentRootLine.ToString().Replace("Current Root:", "").Trim()
         if (Test-Path $nvmBase) {
-            Write-Host "[OK] nvm root actual: $nvmBase" -ForegroundColor Green
+            Show-Message "[OK] nvm root actual: $nvmBase" Ok
         } else {
-            Write-Host "[ADVERTENCIA] nvm root apunta a ubicación inexistente: $nvmBase" -ForegroundColor Yellow
+            Show-Message "[ADVERTENCIA] nvm root apunta a ubicación inexistente: $nvmBase" Custom -CustomColor Yellow
             $nvmBase = $null
         }
     }
 } catch {
-    Write-Host "[ADVERTENCIA] No se pudo obtener nvm root" -ForegroundColor Yellow
+    Show-Message "[ADVERTENCIA] No se pudo obtener nvm root" Custom -CustomColor Yellow
 }
 
 # SEGUNDO: Si no se obtuvo de nvm root, buscar en ubicaciones comunes
 if (-not $nvmBase) {
-    Write-Host "[INFO] No se pudo obtener nvm root" -ForegroundColor Cyan
+    Show-Message "[INFO] No se pudo obtener nvm root" Info
     $nvmPossibleBases = @(
         "$env:NVM_HOME",
         "$env:ProgramFiles\nvm",
@@ -154,7 +184,7 @@ if (-not $nvmBase) {
     foreach ($base in $nvmPossibleBases) {
         if ($base -and (Test-Path $base)) {
             $nvmBase = $base
-            Write-Host "[OK] Ruta de nvm detectada: $nvmBase" -ForegroundColor Green
+            Show-Message "[OK] Ruta de nvm detectada: $nvmBase" Ok
             break
         }
     }
@@ -162,49 +192,49 @@ if (-not $nvmBase) {
 
 # TERCERO: Si aún no se encontró, solicitar manualmente
 if (-not $nvmBase) {
-    Write-Host "[ADVERTENCIA] No se detectó automáticamente la ruta de nvm" -ForegroundColor Yellow
+    Show-Message "[ADVERTENCIA] No se detectó automáticamente la ruta de nvm" Custom -CustomColor Yellow
     $nvmBase = Read-Host "Ingresa la ruta base de nvm (ej: C:\ProgramData\nvm)"
     if (-not (Test-Path $nvmBase)) {
-        Write-Host "[ERROR] La ruta ingresada no existe" -ForegroundColor Red
+        Show-Message "[ERROR] La ruta ingresada no existe" Error
         exit 1
     }
 }
 
 # Verificar permisos de escritura en la ubicación de nvm
-Write-host "[INFO] Verificando permisos de escritura en nvm..." -ForegroundColor Cyan
+Show-Message "[INFO] Verificando permisos de escritura en nvm..." Info
 $testFile = "$nvmBase\test-write-permissions-$([Guid]::NewGuid()).tmp"
 $hasWritePermissions = $false
 try {
     "test" | Out-File $testFile -ErrorAction Stop
     Remove-Item $testFile -Force -ErrorAction Stop
     $hasWritePermissions = $true
-    Write-Host "[OK] Tienes permisos de escritura en la ubicacion de nvm" -ForegroundColor Green
+    Show-Message "[OK] Tienes permisos de escritura en la ubicacion de nvm" Ok
 } catch {
-    Write-Host "[ADVERTENCIA] No tienes permisos de escritura en: $nvmBase" -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "LIMITACIONES DETECTADAS:" -ForegroundColor Red
-    Write-Host "- No podrás reparar instalaciones corruptas de npm" -ForegroundColor Gray 
-    Write-Host "- No podrás desinstalar versiones de Node.js" -ForegroundColor Gray
-    Write-Host "- Solo podrás verificar versiones existentes" -ForegroundColor Gray
-    Write-Host ""
-    Write-Host "OPCIONES DISPONIBLES:" -ForegroundColor Cyan
-    Write-Host "1. Contactar al administrador de IT para:" -ForegroundColor Gray
-    Write-Host "    - Cambiar permisos de la carpeta nvm" -ForegroundColor Gray
-    Write-Host "    - Cambiar nvm root a tu carpeta de usuario" -ForegroundColor Gray
-    Write-Host "    - Ejecutar este script como administrador" -ForegroundColor Gray
-    Write-Host "2. Usar otra PC/ambiente con permisos completos" -ForegroundColor Gray
-    Write-Host "3. Continuar solo para verificar versiones existentes (sin reparaciones)" -ForegroundColor Gray
-    Write-Host ""
+    Show-Message "[ADVERTENCIA] No tienes permisos de escritura en: $nvmBase" Custom -CustomColor Yellow
+    Show-Message ""
+    Show-Message "LIMITACIONES DETECTADAS:" Error
+    Show-Message "- No podrás reparar instalaciones corruptas de npm" Custom -CustomColor Gray 
+    Show-Message "- No podrás desinstalar versiones de Node.js" Custom -CustomColor Gray
+    Show-Message "- Solo podrás verificar versiones existentes" Custom -CustomColor Gray
+    Show-Message ""
+    Show-Message "OPCIONES DISPONIBLES:" Info
+    Show-Message "1. Contactar al administrador de IT para:" Custom -CustomColor Gray
+    Show-Message "    - Cambiar permisos de la carpeta nvm" Custom -CustomColor Gray
+    Show-Message "    - Cambiar nvm root a tu carpeta de usuario" Custom -CustomColor Gray
+    Show-Message "    - Ejecutar este script como administrador" Custom -CustomColor Gray
+    Show-Message "2. Usar otra PC/ambiente con permisos completos" Custom -CustomColor Gray
+    Show-Message "3. Continuar solo para verificar versiones existentes (sin reparaciones)" Custom -CustomColor Gray
+    Show-Message ""
     $continuar = Read-Host "¿Deseas continuar de todos modos? (S/N, Enter=No)"
     if ($continuar -ne "S" -and $continuar -ne "s") {
-        Write-Host ""
-        Write-Host "Script cancelado. Para usar todas las funcionalidades:" -ForegroundColor Yellow
-        Write-Host "- Solicita permisos de administrador" -ForegroundColor Gray
-        Write-Host "- o pide que cambien nvm root a: $env:USERPROFILE\nvm" -ForegroundColor Gray
+        Show-Message ""
+        Show-Message "Script cancelado. Para usar todas las funcionalidades:" Custom -CustomColor Yellow
+        Show-Message "- Solicita permisos de administrador" Custom -CustomColor Gray
+        Show-Message "- o pide que cambien nvm root a: $env:USERPROFILE\nvm" Custom -CustomColor Gray
         exit 0
     }
-    Write-Host ""
-    Write-Host "[INFO] Continuando en modo limitado (solo verificación)..." -ForegroundColor Cyan
+    Show-Message ""
+    Show-Message "[INFO] Continuando en modo limitado (solo verificación)..." Info
 }
 
 # ========================================
@@ -216,92 +246,92 @@ $nodeVersions = @()
 if (Test-Path ".nvmrc") {
     $nvmrcContent = Get-Content ".nvmrc" -Raw
     $nvmrcVersion = $nvmrcContent.Trim()
-    Write-Host "[INFO] Archivo .nvmrc encontrado con versión: $nvmrcVersion" -ForegroundColor Cyan
+    Show-Message "[INFO] Archivo .nvmrc encontrado con versión: $nvmrcVersion" Info
     $useNvmrc = Read-Host "¿Usar esta versión? (S/N, Enter=Sí)"
-    if ([string]::IsNullOrWhiteSpace($useNvmrc) -or $useNvmrc -eq "S" -or $useNvmrc -eq "s") {
+    if ([string]::IsNullOrCustomSpace($useNvmrc) -or $useNvmrc -eq "S" -or $useNvmrc -eq "s") {
         if ($nvmrcVersion -match '^\d+\.\d+\.\d+$') {
             $nodeVersions += $nvmrcVersion
-            Write-Host "[OK] Usando versión de .nvmrc: $nvmrcVersion" -ForegroundColor Green
+            Show-Message "[OK] Usando versión de .nvmrc: $nvmrcVersion" Ok
         } else {
-            Write-Host "[ERROR] La versión en .nvmrc no es válida: $nvmrcVersion" -ForegroundColor Red
+            Show-Message "[ERROR] La versión en .nvmrc no es válida: $nvmrcVersion" Error
         }
     }
 }
 
 # Opción 2: Ingresar versiones manualmente
 if ($nodeVersions.Count -eq 0) {
-    Write-Host ""
-    Write-Host "No se usó .nvmrc o no existe." -ForegroundColor Yellow
+    Show-Message ""
+    Show-Message "No se usó .nvmrc o no existe." Custom -CustomColor Yellow
 }
 
-Write-Host ""
-Write-Host "Ingresa versiones adicionales de Node.js separadas por coma" -ForegroundColor Cyan
-Write-Host "Ejemplos: 24.11.1,24.11.0,22.21.1" -ForegroundColor Gray
-Write-Host "(Presiona Enter para omitir)" -ForegroundColor Gray
+Show-Message ""
+Show-Message "Ingresa versiones adicionales de Node.js separadas por coma" Info
+Show-Message "Ejemplos: 24.11.1,24.11.0,22.21.1" Custom -CustomColor Gray
+Show-Message "(Presiona Enter para omitir)" Custom -CustomColor Gray
 $manualInput = Read-Host "Versiones"
 
-if (-not [string]::IsNullOrWhiteSpace($manualInput)) {
+if (-not [string]::IsNullOrCustomSpace($manualInput)) {
     $manualVersions = $manualInput -split "," | ForEach-Object { $_.Trim() } | Where-Object { $_ }
     foreach ($ver in $manualVersions) {
         if ($ver -match '^\d+\.\d+\.\d+$') {
             $nodeVersions += $ver
         } else {
-            Write-Host "[ERROR] Versión inválida: $ver" -ForegroundColor Red
+            Show-Message "[ERROR] Versión inválida: $ver" Error
         }
     }
 }
 
 if ($nodeVersions.Count -eq 0) {
-    Write-Host "[ERROR] No se ingresaron versiones para procesar" -ForegroundColor Red
+    Show-Message "[ERROR] No se ingresaron versiones para procesar" Error
     exit 1
 }
 
 # Eliminar duplicados
 $nodeVersions = $nodeVersions | Select-Object -Unique
 
-Write-Host ""
-Write-Host "Versiones a procesar: $($nodeVersions -join ', ')" -ForegroundColor Cyan
+Show-Message ""
+Show-Message "Versiones a procesar: $($nodeVersions -join ', ')" Info
 
 # ========================================
 # 4. OBTENER VERSIÓN DE NPM
 # ========================================
-Write-Host ""
+Show-Message ""
 $npmVersion = Read-Host "Versión de npm a usar si falta (ej: 10.9.4, Enter=latest)"
 
-if ([string]::IsNullOrWhiteSpace($npmVersion)) {
-    Write-Host "[INFO] Obteniendo última versión de npm..." -ForegroundColor Cyan
+if ([string]::IsNullOrCustomSpace($npmVersion)) {
+    Show-Message "[INFO] Obteniendo última versión de npm..." Info
     try {
         $npmLatestInfo = Invoke-RestMethod -Uri "https://registry.npmjs.org/npm/latest" -TimeoutSec 10
         $npmVersion = $npmLatestInfo.version
-        Write-Host "[OK] Última version de npm: $npmVersion" -ForegroundColor Green
+        Show-Message "[OK] Última version de npm: $npmVersion" Ok
     } catch {
-        Write-Host "[ERROR] No se pudo obtener la última versión de npm" -ForegroundColor Red
+        Show-Message "[ERROR] No se pudo obtener la última versión de npm" Error
         $npmVersion = Read-Host "Ingresa versión de npm manualmente (ej: 10.9.4)"
     }
 }
 
 # Validar formato de versión de npm o aceptar 'latest'
-if (-not [string]::IsNullOrWhiteSpace($npmVersion)) {
+if (-not [string]::IsNullOrCustomSpace($npmVersion)) {
     if ($npmVersion -eq "latest") {
-        Write-Host "[INFO] Usando la última versión de npm (latest)" -ForegroundColor Cyan
+        Show-Message "[INFO] Usando la última versión de npm (latest)" Info
         try {
             $npmLatestInfo = Invoke-RestMethod -Uri "https://registry.npmjs.org/npm/latest" -TimeoutSec 10
             $npmVersion = $npmLatestInfo.version
-            Write-Host "[OK] Última versión de npm: $npmVersion" -ForegroundColor Green
+            Show-Message "[OK] Última versión de npm: $npmVersion" Ok
         } catch {
-            Write-Host "[ERROR] No se pudo obtener la última versión de npm" -ForegroundColor Red
+            Show-Message "[ERROR] No se pudo obtener la última versión de npm" Error
             exit 1
         }
     } elseif ($npmVersion -notmatch '^\d+\.\d+\.\d+$') {
-        Write-Host "[ERROR] Versión de npm inválida: $npmVersion" -ForegroundColor Red
+        Show-Message "[ERROR] Versión de npm inválida: $npmVersion" Error
         exit 1
     }
 }
 
-Write-Host ""
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host " Iniciando procesamiento..." -ForegroundColor Cyan
-Write-Host "========================================" -ForegroundColor Cyan
+Show-Message ""
+Show-Message "========================================" Info
+Show-Message " Iniciando procesamiento..." Info
+Show-Message "========================================" Info
 
 # ========================================
 # 5. PROCESAR CADA VERSIÓN
@@ -310,21 +340,21 @@ $successCount = 0
 $failCount = 0
 
 foreach ($version in $nodeVersions) {
-    Write-Host ""
-    Write-Host "" -ForegroundColor DarkGray
-    Write-Host "Procesando Node.js v$version..." -ForegroundColor Yellow
-    Write-Host "" -ForegroundColor DarkGray
+    Show-Message ""
+    Show-Message "" DarkCustom -CustomColor Gray
+    Show-Message "Procesando Node.js v$version..." Custom -CustomColor Yellow
+    Show-Message "" DarkCustom -CustomColor Gray
 
     $nodePath = "$nvmBase\v$version"
     $nodeInstalled = Test-Path $nodePath
 
     # 5.1 Verificar si la versión está instalada
     if (-not $nodeInstalled) {
-        Write-Host "[INFO] Node.js v$version no está en la ubicación actual" -ForegroundColor Yellow
+        Show-Message "[INFO] Node.js v$version no está en la ubicación actual" Custom -CustomColor Yellow
         
         # Verificar si hay una instalación en progreso (archivos parciales)
         if (Test-Path $nodePath) {
-            Write-Host "[INFO] Carpeta detectada, verificando si instalación está en progreso..." -ForegroundColor Cyan
+            Show-Message "[INFO] Carpeta detectada, verificando si instalación está en progreso..." Info
             Start-Sleep -Seconds 5
         }
 
@@ -333,21 +363,21 @@ foreach ($version in $nodeVersions) {
         $npmCmdExists = Test-Path "$nodePath\npm.cmd"
 
         if ($nodeExeExists -and $npmCmdExists) {
-            Write-Host "[OK] Node.js v$version encontrado (instalación previa completada)" -ForegroundColor Green
+            Show-Message "[OK] Node.js v$version encontrado (instalación previa completada)" Ok
             $nodeInstalled = $true
         } else {
-            Write-Host "[ACCIÓN] Instalando con nvm..." -ForegroundColor Cyan
+            Show-Message "[ACCIÓN] Instalando con nvm..." Info
 
             nvm install $version 2>&1 | Out-Null
 
             if ($LASTEXITCODE -ne 0) {
-                Write-Host "[ERROR] No se pudo instalar Node.js v$version (versión no disponible)" -ForegroundColor Red
+                Show-Message "[ERROR] No se pudo instalar Node.js v$version (versión no disponible)" Error
                 $failCount++
                 continue
             }
 
             # Esperar con verificación inteligente
-            Write-Host "   Esperando confirmación de instalación..." -ForegroundColor Gray
+            Show-Message "   Esperando confirmación de instalación..." Custom -CustomColor Gray
             $maxWait = 150 # 2.5 minutos total
             $elapsed = 0
             $installComplete = $false
@@ -358,40 +388,40 @@ foreach ($version in $nodeVersions) {
 
                 if ((Test-Path "$nodePath\node.exe") -and (Test-Path "$nodePath\npm.cmd")) {
                     $installComplete = $true
-                    Write-Host "   [OK] Instalación confirmada ($elapsed segundos)" -ForegroundColor Green
+                    Show-Message "   [OK] Instalación confirmada ($elapsed segundos)" Ok
                     break
                 }
 
                 if($elapsed % 10 -eq 0 -and $elapsed -le 120) {
-                    Write-Host "   Instalando... ($elapsed segundos)" -ForegroundColor Green
+                    Show-Message "   Instalando... ($elapsed segundos)" Ok
                 } elseif ($elapsed -gt 120 -and $elapsed % 10 -eq 0) {
-                    Write-Host "   Aún instalando... ($elapsed segundos)" -ForegroundColor Yellow
+                    Show-Message "   Aún instalando... ($elapsed segundos)" Custom -CustomColor Yellow
                 }
             }
 
             # Verificación final si alcanzó timeout
             if (-not $installComplete) {
-                Write-Host "   [ADVERTENCIA] Timeout de 150 segundos alcanzado" -ForegroundColor Yellow
-                Write-Host "   Esperando 5 segundos adicionales para verificación final..." -ForegroundColor Gray
+                Show-Message "   [ADVERTENCIA] Timeout de 150 segundos alcanzado" Custom -CustomColor Yellow
+                Show-Message "   Esperando 5 segundos adicionales para verificación final..." Custom -CustomColor Gray
                 Start-Sleep -Seconds 5
 
                 if ((Test-Path "$nodePath\node.exe") -and (Test-Path "$nodePath\npm.cmd")) {
-                    Write-Host "   [OK] Instalacion completada (verificación final)" -ForegroundColor Green
+                    Show-Message "   [OK] Instalacion completada (verificación final)" Ok
                     $nodeInstalled = $true
                 } else {
-                    Write-Host "[ERROR] La instalación no completó en el tiempo esperado" -ForegroundColor Red
-                    Write-Host ""
-                    Write-Host "IMPORTANTE:" -ForegroundColor Yellow
-                    Write-Host "La instalación de Node.js v$version puede seguir en proceso en segundo plano." -ForegroundColor Yellow
-                    Write-Host ""
-                    Write-Host "SOLUCIÓN:" -ForegroundColor Cyan
-                    Write-Host "1. Espera 2-3 minutos para que termina la descarga/instalación" -ForegroundColor Gray
-                    Write-Host "2. Ejecuta este script nuevamente: .\install_npm_version_v2.ps1" -ForegroundColor Gray
-                    Write-Host "3. El script detectará si la instalación se completó y continuará" -ForegroundColor Gray
-                    Write-Host ""
-                    Write-Host "Alternativamente, verífica manualmente con:" -ForegroundColor Gray
-                    Write-Host "  nvm list" -ForegroundColor White
-                    Write-Host ""
+                    Show-Message "[ERROR] La instalación no completó en el tiempo esperado" Error
+                    Show-Message ""
+                    Show-Message "IMPORTANTE:" Custom -CustomColor Yellow
+                    Show-Message "La instalación de Node.js v$version puede seguir en proceso en segundo plano." Custom -CustomColor Yellow
+                    Show-Message ""
+                    Show-Message "SOLUCIÓN:" Info
+                    Show-Message "1. Espera 2-3 minutos para que termina la descarga/instalación" Custom -CustomColor Gray
+                    Show-Message "2. Ejecuta este script nuevamente: .\install_npm_version_v2.ps1" Custom -CustomColor Gray
+                    Show-Message "3. El script detectará si la instalación se completó y continuará" Custom -CustomColor Gray
+                    Show-Message ""
+                    Show-Message "Alternativamente, verífica manualmente con:" Custom -CustomColor Gray
+                    Show-Message "  nvm list" Custom
+                    Show-Message ""
                     $failCount++
                     continue
                 }
@@ -400,31 +430,31 @@ foreach ($version in $nodeVersions) {
             }
 
             if ($nodeInstalled) {
-                Write-Host "[OK] Node.js v$version instalado correctamente" -ForegroundColor Green
+                Show-Message "[OK] Node.js v$version instalado correctamente" Ok
             }
         }
     } else {
-        Write-Host "[OK] Node.js v$version ya está instalado" -ForegroundColor Green
+        Show-Message "[OK] Node.js v$version ya está instalado" Ok
     }
 
     # 5.2 Activar versión
-    Write-Host "[ACCIÓN] Activando Node.js v$version..." -ForegroundColor Cyan
+    Show-Message "[ACCIÓN] Activando Node.js v$version..." Info
     nvm use $version 2>&1 | Out-Null
     Start-Sleep -Milliseconds 500
 
     # 5.3 Verificar node.exe
     $nodeExe = "$nodePath\node.exe"
     if (-not (Test-Path $nodeExe)) {
-        Write-Host "[ERROR] node.exe no existe en $nodePath" -ForegroundColor Red
+        Show-Message "[ERROR] node.exe no existe en $nodePath" Error
         $failCount++
         continue
     }
 
     try {
         $nodeVer = & $nodeExe -v 2>&1
-        Write-Host "[OK] Node.js verificado: $nodeVer" -ForegroundColor Green
+        Show-Message "[OK] Node.js verificado: $nodeVer" Ok
     } catch {
-        Write-Host "[ERROR] node.exe no ejecuta correctamente" -ForegroundColor Red
+        Show-Message "[ERROR] node.exe no ejecuta correctamente" Error
         $failCount++
         continue
     }
@@ -436,45 +466,45 @@ foreach ($version in $nodeVersions) {
     try {
         $npmVer = & $npmCmd -v 2>&1
         if ($LASTEXITCODE -eq 0 -and $npmVer -match "^\d+\.\d+\.\d+") {
-            Write-Host "[OK] npm verificado: v$npmVer" -ForegroundColor Green
+            Show-Message "[OK] npm verificado: v$npmVer" Ok
             $npmFixed = $true
         } else {
             throw "npm corrupto"
         }
     } catch {
-        Write-Host "[ADVERTENCIA] npm no funciona o está corrupto" -ForegroundColor Yellow
+        Show-Message "[ADVERTENCIA] npm no funciona o está corrupto" Custom -CustomColor Yellow
 
         # Verificar si tenemos permisos antes de intentar reparar
         if (-not $hasWritePermissions) {
-            Write-Host "[BLOQUEADO] No se puede reparar npm sin permisos de escritura" -ForegroundColor Red
-            Write-Host "Esta versión está corrupta y la ubicación de nvm está protegida" -ForegroundColor Yellow
-            Write-Host ""
-            Write-Host "SOLUCIONES:" -ForegroundColor Cyan
-            Write-Host "1. Contacta al administrador de IT para:" -ForegroundColor Gray
-            Write-Host "    - Desinstalar manualmente: $nodePath" -ForegroundColor Gray
-            Write-Host "    - Reinstalar Node.js v$version limpio" -ForegroundColor Gray
-            Write-Host "    - O cambia nvm root a tu carpeta de usuario" -ForegroundColor Gray
-            Write-Host "2. Ejecuta este script como Administrador" -ForegroundColor Gray
-            Write-Host "3. Usa una pc con permisos completos" -ForegroundColor Gray
-            Write-Host ""
+            Show-Message "[BLOQUEADO] No se puede reparar npm sin permisos de escritura" Error
+            Show-Message "Esta versión está corrupta y la ubicación de nvm está protegida" Custom -CustomColor Yellow
+            Show-Message ""
+            Show-Message "SOLUCIONES:" Info
+            Show-Message "1. Contacta al administrador de IT para:" Custom -CustomColor Gray
+            Show-Message "    - Desinstalar manualmente: $nodePath" Custom -CustomColor Gray
+            Show-Message "    - Reinstalar Node.js v$version limpio" Custom -CustomColor Gray
+            Show-Message "    - O cambia nvm root a tu carpeta de usuario" Custom -CustomColor Gray
+            Show-Message "2. Ejecuta este script como Administrador" Custom -CustomColor Gray
+            Show-Message "3. Usa una pc con permisos completos" Custom -CustomColor Gray
+            Show-Message ""
             $failCount++
             continue
         }
 
-        Write-Host "[ACCIÓN] Reparando npm con descarga standalone v$npmVersion..." -ForegroundColor Cyan
+        Show-Message "[ACCIÓN] Reparando npm con descarga standalone v$npmVersion..." Info
 
         $npmTgz = "$env:TEMP\npm-$npmVersion.tgz"
         $npmUrl = "https://registry.npmjs.org/npm/-/npm-$npmVersion.tgz"
 
         try {
-            Write-Host "  Descargando npm v$npmVersion..." -ForegroundColor Gray
+            Show-Message "  Descargando npm v$npmVersion..." Custom -CustomColor Gray
             Invoke-WebRequest -Uri $npmUrl -OutFile $npmTgz -TimeoutSec 30 -ErrorAction Stop
 
             if (-not (Test-Path $npmTgz)) {
                 throw "Archivo no descargado"
             }
 
-            Write-Host "  Extrayendo archivo..." -ForegroundColor Gray
+            Show-Message "  Extrayendo archivo..." Custom -CustomColor Gray
             $extractPath = "$env:TEMP\npm-extract-$version"
             if (-not (Test-Path $extractPath)) {
                 Remove-Item $extractPath -Recurse -Force -ErrorAction SilentlyContinue
@@ -492,12 +522,12 @@ foreach ($version in $nodeVersions) {
                 throw "No se encontró carpeta 'package' en el archivo extraído"
             }
 
-            Write-Host "   Reemplazando instalación corrupta..." -ForegroundColor Gray
+            Show-Message "   Reemplazando instalación corrupta..." Custom -CustomColor Gray
             $npmModulePath = "$nodePath\node_modules\npm"
 
             if (Test-Path $npmModulePath) {
                 # PREPARACIÓN: Liberar archivos bloqueados y cambiar atributos
-                Write-Host "   Preparando archivos para modificación..." -ForegroundColor Gray
+                Show-Message "   Preparando archivos para modificación..." Custom -CustomColor Gray
 
                 # Terminar procesos de node/npm que puedan estar usando los archivos
                 $processesKilled = 0
@@ -508,12 +538,12 @@ foreach ($version in $nodeVersions) {
                             $_.kill()
                             $_.WaitForExit(2000)
                             $processesKilled++
-                            Write-Host "   [INFO] Proceso $procName terminado" -ForegroundColor Gray
+                            Show-Message "   [INFO] Proceso $procName terminado" Custom -CustomColor Gray
                         } catch {}
                     }
                 
                 if ($processesKilled -gt 0) {
-                    Write-Host "   [INFO] $processesKilled proceso(s) terminado(s), esperando 2 segundos..." -ForegroundColor Gray
+                    Show-Message "   [INFO] $processesKilled proceso(s) terminado(s), esperando 2 segundos..." Custom -CustomColor Gray
                     Start-Sleep -Seconds 2
                 }
                 
@@ -530,21 +560,21 @@ foreach ($version in $nodeVersions) {
                             } catch {}
                         }
                     if ($filesChanged -gt 0) {
-                        Write-Host "   [INFO] $filesChanged archivo(s) desbloqueado(s)" -ForegroundColor Gray
+                        Show-Message "   [INFO] $filesChanged archivo(s) desbloqueado(s)" Custom -CustomColor Gray
                     }
                 } catch {}
 
                 # ESTRATEGIA 1: Intentar sobrescribir directamente sin eliminar
-                Write-Host "   Estrategia 1: Sobrescribiendo archivos directamente..." -ForegroundColor Gray
+                Show-Message "   Estrategia 1: Sobrescribiendo archivos directamente..." Custom -CustomColor Gray
                 try {
                     Copy-Item "$packagePath\*" $npmModulePath -Recurse -Force -ErrorAction Stop
-                    Write-Host "   [OK] npm sobrescrito exitosamente" -ForegroundColor Green
+                    Show-Message "   [OK] npm sobrescrito exitosamente" Ok
                 } catch {
-                    Write-Host "   [ERROR] Falló sobrescritura: $($_.Exception.Message)" -ForegroundColor Yellow
-                    Write-Host "   [ADVERTENCIA] No se pudo sobrescribir directamente" -ForegroundColor Yellow
+                    Show-Message "   [ERROR] Falló sobrescritura: $($_.Exception.Message)" Custom -CustomColor Yellow
+                    Show-Message "   [ADVERTENCIA] No se pudo sobrescribir directamente" Custom -CustomColor Yellow
 
                     # ESTRATEGIA 2: Eliminar y copiar
-                    Write-Host "   Estrategia 2: Eliminando carpeta corrupta..." -ForegroundColor Gray
+                    Show-Message "   Estrategia 2: Eliminando carpeta corrupta..." Custom -CustomColor Gray
 
                     # Eliminar atributos de solo lectura primero
                     Get-ChildItem -Path $npmModulePath -Recurse -Force -ErrorAction SilentlyContinue |
@@ -558,26 +588,26 @@ foreach ($version in $nodeVersions) {
                     # Verificar si se eliminó
                     if (Test-Path $npmModulePath) {
                         # ESTRATEGIA 3: Renombrar carpeta vieja
-                        Write-Host "   Estrategia 3: Renombrando carpeta vieja..." -ForegroundColor Gray
+                        Show-Message "   Estrategia 3: Renombrando carpeta vieja..." Custom -CustomColor Gray
                         $backupPath = "$nodePath\node_modules\npm.old.$([DateTime]::Now.ToString('yyyyMMddHHmmss'))"
                         try {
                             Rename-Item $npmModulePath $backupPath -Force -ErrorAction Stop
-                            Write-Host "   [OK] Carpeta antigua renombrada" -ForegroundColor Green
+                            Show-Message "   [OK] Carpeta antigua renombrada" Ok
                         } catch {
-                            Write-Host "   [ERROR] No se pudo eliminar ni renombrar" -ForegroundColor Red
+                            Show-Message "   [ERROR] No se pudo eliminar ni renombrar" Error
                             throw "Permisos insuficientes para modificar $npmModulePath"
                         }
                     } else {
-                        Write-Host "   [OK] Carpeta eliminada" -ForegroundColor Green
+                        Show-Message "   [OK] Carpeta eliminada" Ok
                     }
 
                     # Copiar nueva versión
-                    Write-Host "   Copiando nueva version de npm..." -ForegroundColor Gray
+                    Show-Message "   Copiando nueva version de npm..." Custom -CustomColor Gray
                     Copy-Item $packagePath $npmModulePath -Recurse -Force -ErrorAction Stop
                 }
             } else {
                 # No existe, copiar directamente
-                Write-host "   Copiando nueva versión de npm..." -ForegroundColor Gray
+                Show-Message "   Copiando nueva versión de npm..." Custom -CustomColor Gray
                 Copy-Item $packagePath $npmModulePath -Recurse -Force -ErrorAction Stop
             }
 
@@ -593,54 +623,54 @@ foreach ($version in $nodeVersions) {
             Remove-Item $extractPath -Recurse -Force -ErrorAction SilentlyContinue
 
             # Verificar que npm funciona
-            Write-Host "   Verificando instalación..." -ForegroundColor Gray
+            Show-Message "   Verificando instalación..." Custom -CustomColor Gray
             $npmVer = & $npmCmd -v 2>&1
             if ($LASTEXITCODE -eq 0 -and $npmVer -match "^\d+\.\d+\.\d+") {
-                Write-Host "[OK] npm reparado exitosamente: v$npmVer" -ForegroundColor Green
+                Show-Message "[OK] npm reparado exitosamente: v$npmVer" Ok
                 $npmFixed = $true
             } else {
-                Write-Host "[ERROR] npm sigue sin funcionar después de la reparación" -ForegroundColor Red
+                Show-Message "[ERROR] npm sigue sin funcionar después de la reparación" Error
             }
 
         } catch {
-            Write-Host "[ERROR] No se pudo reparar npm: $_" -ForegroundColor Red
+            Show-Message "[ERROR] No se pudo reparar npm: $_" Error
             if ($_ -match "Permisos insuficientes") {
-                Write-Host ""
-                Write-Host "   SOLUCIÓN:" -ForegroundColor Yellow
-                Write-Host "   1. Ejecuta PowerShell como Administrador" -ForegroundColor Gray
-                Write-Host "   2. Vuelve a ejecutar este script" -ForegroundColor Gray
-                Write-Host ""
+                Show-Message ""
+                Show-Message "   SOLUCIÓN:" Custom -CustomColor Yellow
+                Show-Message "   1. Ejecuta PowerShell como Administrador" Custom -CustomColor Gray
+                Show-Message "   2. Vuelve a ejecutar este script" Custom -CustomColor Gray
+                Show-Message ""
             }
         }
     }
     
     # 5.5 última alternativa: Reinstalar Node.js completo si npm no funciona
     if (-not $npmFixed -and $hasWritePermissions) {
-        Write-Host ""
-        Write-Host "[ÚLTIMA OPCIÓN] Intentando reinstalar Node.js v$version completamente..." -ForegroundColor Magenta
+        Show-Message ""
+        Show-Message "[ÚLTIMA OPCIÓN] Intentando reinstalar Node.js v$version completamente..." Custom -CustomColor Magenta
 
         try {
             # Desinstalar versión actual
-            Write-Host "   Paso 1/4: Desinsatalando versión corrupta..." -ForegroundColor Gray
+            Show-Message "   Paso 1/4: Desinsatalando versión corrupta..." Custom -CustomColor Gray
             nvm uninstall $version 2>&1 | Out-Null
             Start-Sleep -Seconds 3
 
             # Verificar que se desinstaló
             if (Test-Path $nodePath) {
-                Write-Host "   [ADVERTENCIA] Carpeta no eliminada por nvm, intentando limpieza..." -ForegroundColor Yellow
+                Show-Message "   [ADVERTENCIA] Carpeta no eliminada por nvm, intentando limpieza..." Custom -CustomColor Yellow
                 try {
                     Remove-Item $nodePath -Recurse -Force -ErrorAction Stop
-                    Write-Host "   [OK] Carpeta eliminada manualmente" -ForegroundColor Green
+                    Show-Message "   [OK] Carpeta eliminada manualmente" Ok
                 } catch {
-                    Write-Host "   [ERROR] No se puede eliminar. Requiere permisos de admin" -ForegroundColor Red
+                    Show-Message "   [ERROR] No se puede eliminar. Requiere permisos de admin" Error
                     throw "No se pudo desinstalar completamente"
                 }
             } else {
-                Write-Host "   [OK] Versión desinstalada correctamente" -ForegroundColor Green
+                Show-Message "   [OK] Versión desinstalada correctamente" Ok
             }
 
             # Reinstalar versión limpia
-            Write-Host "   Paso 2/4: Descagando e instalando versión limpia (puede tardar 1-2 minutos)..." -ForegroundColor Gray
+            Show-Message "   Paso 2/4: Descagando e instalando versión limpia (puede tardar 1-2 minutos)..." Custom -CustomColor Gray
             nvm install $version 2>&1 | Out-Null
 
             if ($LASTEXITCODE -ne 0) {
@@ -648,7 +678,7 @@ foreach ($version in $nodeVersions) {
             }
 
             # Esperar a que la instalación complete completamente
-            Write-Host "   Esperando a que la instalación finalice..." -ForegroundColor Gray
+            Show-Message "   Esperando a que la instalación finalice..." Custom -CustomColor Gray
             $maxWaitTime = 120 # 2 minutos tiempo normal
             $checkInterval = 2 # Revisar cada 2 segundos
             $elapsedTime = 0
@@ -664,20 +694,20 @@ foreach ($version in $nodeVersions) {
 
                 if ($nodeExeExists -and $npmCmdExists) {
                     $installComplete = $true
-                    Write-Host "   [OK] Instalación completada ($elapsedTime segundos)" -ForegroundColor Green
+                    Show-Message "   [OK] Instalación completada ($elapsedTime segundos)" Ok
                     break
                 }
 
                 # Mostrar progreso cada 10 segundos
                 if ($elapsedTime % 10 -eq 0) {
-                    Write-Host "   Esperando... ($elapsedTime/$maxWaitTime segundos)" -ForegroundColor Gray
+                    Show-Message "   Esperando... ($elapsedTime/$maxWaitTime segundos)" Custom -CustomColor Gray
                 }
             }
 
             # Si alcanzó el timeout, dar tiempo extra y verificar una vez más
             if (-not $installComplete) {
-                Write-Host "   [ADVERTENCIA] Timeout de $maxWaitTime segundos alcanzados" -ForegroundColor Yellow
-                Write-Host "    Dando 30 segundos adicionales por si la instalación está finalizando..." -ForegroundColor Gray
+                Show-Message "   [ADVERTENCIA] Timeout de $maxWaitTime segundos alcanzados" Custom -CustomColor Yellow
+                Show-Message "    Dando 30 segundos adicionales por si la instalación está finalizando..." Custom -CustomColor Gray
 
                 $extraWaitTime = 30
                 $extraElapsed = 0
@@ -691,12 +721,12 @@ foreach ($version in $nodeVersions) {
                     if ($nodeExeExists -and $npmCmdExists) {
                         $installComplete = $true
                         $totalTime = $elapsedTime + $extraElapsed
-                        Write-Host "   [OK] Instalación completada después de $totalTime segundos" -ForegroundColor Green
+                        Show-Message "   [OK] Instalación completada después de $totalTime segundos" Ok
                         break
                     }
 
                     if ($extraElapsed % 10 -eq 0) {
-                        Write-Host "   Tiempo extra: $extraElapsed/$extraWaitTime segundos..." -ForegroundColor Gray
+                        Show-Message "   Tiempo extra: $extraElapsed/$extraWaitTime segundos..." Custom -CustomColor Gray
                     }
                 }
             }
@@ -708,7 +738,7 @@ foreach ($version in $nodeVersions) {
                 $npmCmdExists = Test-Path "$nodePath\npm.cmd"
 
                 if ($nodeExeExists -and $npmCmdExists) {
-                    Write-Host "   [OK] Instalación verificada en verificación final" -ForegroundColor Green
+                    Show-Message "   [OK] Instalación verificada en verificación final" Ok
                     $installComplete = $true
                 } else {
                     throw "La instalación no completó después de 150 segundos o archivos faltantes"
@@ -718,70 +748,70 @@ foreach ($version in $nodeVersions) {
             # Espera adicional de seguridad para que se escriban todos los archivos
             Start-Sleep -Seconds 2
 
-            Write-Host "   [OK] Node.js v$version reinstalado completamente" -ForegroundColor Green
+            Show-Message "   [OK] Node.js v$version reinstalado completamente" Ok
 
             # Activar versión
-            Write-Host "   Paso 3/4: Activando versión reinstalada..." -ForegroundColor Gray
+            Show-Message "   Paso 3/4: Activando versión reinstalada..." Custom -CustomColor Gray
             nvm use $version 2>&1 | Out-Null
             Start-Sleep -Seconds 1
 
             # Verificar npm nuevamente
-            Write-Host "   Paso 4/4: Verificando npm..." -ForegroundColor Gray
+            Show-Message "   Paso 4/4: Verificando npm..." Custom -CustomColor Gray
             $npmVer = & $npmCmd -v 2>&1
 
             if ($LASTEXITCODE -eq 0 -and $npmVer -match "^\d+\.\d+\.\d+") {
-                Write-Host "[ÉXITO] npm ahora funciona correctamente: v$npmVer" -ForegroundColor Green
-                Write-Host "[ÉXITO] Node.js v$version reinstalado y configurado exitosamente" -ForegroundColor Green
+                Show-Message "[ÉXITO] npm ahora funciona correctamente: v$npmVer" Ok
+                Show-Message "[ÉXITO] Node.js v$version reinstalado y configurado exitosamente" Ok
                 $npmFixed = $true
             } else {
-                Write-Host "[ERROR] No se pudo reinstalar Node.js v$version" -ForegroundColor Red
-                Write-Host "   Es posible que nvm-windows esté corrupto o la versión de Node.js tenga problemas" -ForegroundColor Yellow
+                Show-Message "[ERROR] No se pudo reinstalar Node.js v$version" Error
+                Show-Message "   Es posible que nvm-windows esté corrupto o la versión de Node.js tenga problemas" Custom -CustomColor Yellow
             }
 
         } catch {
-            Write-Host "[ERROR] No se pudo reinstalar Node.js v$version" -ForegroundColor Red
-            Write-Host "   Detalles: $_" -ForegroundColor Red
-            Write-Host ""
-            Write-Host "   Intenta manualmente:" -ForegroundColor Yellow
-            Write-Host "   nvm uninstall $version" -ForegroundColor Gray
-            Write-Host "   nvm install $version" -ForegroundColor Gray
-            Write-Host "   nvm use $version" -ForegroundColor Gray
+            Show-Message "[ERROR] No se pudo reinstalar Node.js v$version" Error
+            Show-Message "   Detalles: $_" Error
+            Show-Message ""
+            Show-Message "   Intenta manualmente:" Custom -CustomColor Yellow
+            Show-Message "   nvm uninstall $version" Custom -CustomColor Gray
+            Show-Message "   nvm install $version" Custom -CustomColor Gray
+            Show-Message "   nvm use $version" Custom -CustomColor Gray
         }
     }
 
     # 5.6 Última opción extrema: Cambiar nvm root
     if (-not $npmFixed) {
-        Write-Host ""
+        Show-Message ""
         if ($hasWritePermissions) {
-            Write-Host "[OPCIÓN FINAL] Todas las estrategias de reparación fallaron" -ForegroundColor Red
-            Write-Host "Esto puede ser un problema de permisos o corrupción severa" -ForegroundColor Yellow
+            Show-Message "[OPCIÓN FINAL] Todas las estrategias de reparación fallaron" Error
+            Show-Message "Esto puede ser un problema de permisos o corrupción severa" Custom -CustomColor Yellow
         } else {
-            Write-Host "[OPCIÓN FINAL] npm corrupto en ubicación sin permisos" -ForegroundColor Red
-            Write-Host "No se puede reparar sin permisos de escritura en: $nvmBase" -ForegroundColor Yellow
+            Show-Message "[OPCIÓN FINAL] npm corrupto en ubicación sin permisos" Error
+            Show-Message "No se puede reparar sin permisos de escritura en: $nvmBase" Custom -CustomColor Yellow
         }
-        Write-Host ""
-        Write-Host "Ubicación actual de nvm: $nvmBase" -ForegroundColor Gray
-        Write-Host ""
-        Write-Host "¿Deseas cambiar nvm a una ubicación con permisos completos?" -ForegroundColor Cyan
-        Write-Host "Recomendado: $env:USERPROFILE\nvm (tu carpeta de usuario)" -ForegroundColor Gray
-        Write-Host ""
+        Show-Message ""
+        Show-Message "Ubicación actual de nvm: $nvmBase" Custom -CustomColor Gray
+        Show-Message ""
+        Show-Message "¿Deseas cambiar nvm a una ubicación con permisos completos?" Info
+        Show-Message "Recomendado: $env:USERPROFILE\nvm (tu carpeta de usuario)" Custom -CustomColor Gray
+        Show-Message ""
         $cambiarRoot = Read-Host "¿Cambiar ubicación de nvm? (S/N, Enter=No)"
 
         if ($cambiarRoot -eq "S" -or $cambiarRoot -eq "s") {
-            Write-Host ""
-            Write-Host "Ingresa la NUEVA ubicación para nvm:" -ForegroundColor Cyan
-            Write-Host "Ejemplos:" -ForegroundColor Gray
-            Write-Host "  - $env:USERPROFILE\nvm" -ForegroundColor Gray
-            Write-Host "  - $env:LOCALAPPDATA\nvm" -ForegroundColor Gray
-            Write-Host "  - C:\Dev\nvm" -ForegroundColor Gray
-            Write-Host ""
+            Show-Message ""
+            Show-Message "Ingresa la NUEVA ubicación para nvm:" Info
+            Show-Message "Ejemplos:" Custom -CustomColor Gray
+            Show-Message "  - $env:USERPROFILE\nvm" Custom -CustomColor Gray
+            Show-Message "  - $env:LOCALAPPDATA\nvm" Custom -CustomColor Gray
+            Show-Message "  - C:\Dev\nvm" Custom -CustomColor Gray
+            Show-Message ""
             $newNvmRoot = Read-Host "Nueva ruta"
 
-            if (-not [string]::IsNullOrWhiteSpace($newNvmRoot)) {
+            if (-not [string]::IsNullOrCustomSpace($newNvmRoot)) {
                 try {
                     # Crear carpeta si no existe
                     if (-not (Test-Path $newNvmRoot)) {
-                        Write-Host "   Creando carpeta: $newNvmRoot" -ForegroundColor Gray
+                        Show-Message "   Creando carpeta: $newNvmRoot" Custom -CustomColor Gray
                         New-Item -ItemType Directory -Path $newNvmRoot -Force | Out-Null
                     }
 
@@ -790,13 +820,13 @@ foreach ($version in $nodeVersions) {
                     try {
                         "test" | Out-File $testFile -ErrorAction Stop
                         Remove-Item $testFile -Force
-                        Write-Host "   [OK] Permisos de escritura verificados" -ForegroundColor Green
+                        Show-Message "   [OK] Permisos de escritura verificados" Ok
                     } catch {
                         throw "No tienes permisos de escritura en: $newNvmRoot"
                     }
 
                     # Cambiar nvm root
-                    Write-Host "   Cambiando nvm root a: $newNvmRoot" -ForegroundColor Gray
+                    Show-Message "   Cambiando nvm root a: $newNvmRoot" Custom -CustomColor Gray
                     $nvmRootOutput = nvm root $newNvmRoot 2>&1
 
                     # Verificar que el comando se ejectuó correctamente
@@ -815,30 +845,30 @@ foreach ($version in $nodeVersions) {
                         }
                     }
 
-                    Write-Host "   [OK] nvm root cambiado exitosamente" -ForegroundColor Green
-                    Write-Host "   Salida: $nvmRootOutput" -ForegroundColor Gray
-                    Write-Host ""
+                    Show-Message "   [OK] nvm root cambiado exitosamente" Ok
+                    Show-Message "   Salida: $nvmRootOutput" Custom -CustomColor Gray
+                    Show-Message ""
 
                     # Actualizar variables para próximas versiones
                     $nvmBase = $newNvmRoot
                     $hasWritePermissions = $true # Nueva ubicación tiene permisos
 
                     # Reinstalar esta versión en nueva ubicación
-                    Write-Host "[REINTENTO] Instalado Node.js v$version en nueva ubicación..." -ForegroundColor Magenta
-                    Write-Host "Nota: La versión corrupta en ubicación anterior quedará intacta" -ForegroundColor Gray
+                    Show-Message "[REINTENTO] Instalado Node.js v$version en nueva ubicación..." Custom -CustomColor Magenta
+                    Show-Message "Nota: La versión corrupta en ubicación anterior quedará intacta" Custom -CustomColor Gray
                     $nodePath = "$nvmBase\v$version"
 
                     # Intentar desinstalar de ubicación vieja (puede fallar sin permisos)
-                    Write-Host "   Intentado desinstalar de ubicación anterior..." -ForegroundColor Gray
+                    Show-Message "   Intentado desinstalar de ubicación anterior..." Custom -CustomColor Gray
                     nvm uninstall $version 2>&1 | Out-Null
                     if ($LASTEXITCODE -ne 0) {
-                        Write-Host "   [INFO] No se pudo desinstalar de ubicación anterior (sin permisos)" -ForegroundColor Gray
-                        Write-Host "   [INFO] La versión corrupta quedará en: $(Split-Path $nodePath -Parent)" -ForegroundColor Gray
+                        Show-Message "   [INFO] No se pudo desinstalar de ubicación anterior (sin permisos)" Custom -CustomColor Gray
+                        Show-Message "   [INFO] La versión corrupta quedará en: $(Split-Path $nodePath -Parent)" Custom -CustomColor Gray
                     }
                     Start-Sleep -Seconds 2
 
                     # Instalar en nueva ubicación
-                    Write-Host "   Instalando Node.js v$version en nueva ubicación..." -ForegroundColor Gray
+                    Show-Message "   Instalando Node.js v$version en nueva ubicación..." Custom -CustomColor Gray
                     nvm install $version 2>&1 | Out-Null
 
                     if ($LASTEXITCODE -ne 0) {
@@ -846,7 +876,7 @@ foreach ($version in $nodeVersions) {
                     }
 
                     # Esperar instalación
-                    Write-Host "   Esperando a que complete la instalación..." -ForegroundColor Gray
+                    Show-Message "   Esperando a que complete la instalación..." Custom -CustomColor Gray
                     $maxWait = 120
                     $elapsed = 0
                     while ($elapsed -lt $maxWait) {
@@ -856,12 +886,12 @@ foreach ($version in $nodeVersions) {
                             break
                         }
                         if ($elapsed % 10 -eq 0) {
-                            Write-Host "   Esperando... ($elapsed/$maxWait seg)" -ForegroundColor Gray
+                            Show-Message "   Esperando... ($elapsed/$maxWait seg)" Custom -CustomColor Gray
                         }
                     }
 
                     # Activar versión
-                    Write-Host "   Activando Node.js v$version..." -ForegroundColor Gray
+                    Show-Message "   Activando Node.js v$version..." Custom -CustomColor Gray
                     nvm use $version 2>&1 | Out-Null
                     Start-Sleep -Seconds 1
 
@@ -870,20 +900,20 @@ foreach ($version in $nodeVersions) {
                     $npmVer = & $npmCmd -v 2>&1
 
                     if ($LASTEXITCODE -eq 0 -and $npmVer -match "^\d+\.\d+\.\d+") {
-                        Write-Host "[ÉXITO] Node.js v$version isntalado correctamente en nueva ubicación" -ForegroundColor Green
-                        Write-Host "[ÉXITO] npm funciona: v$npmVer" -ForegroundColor Green
+                        Show-Message "[ÉXITO] Node.js v$version isntalado correctamente en nueva ubicación" Ok
+                        Show-Message "[ÉXITO] npm funciona: v$npmVer" Ok
                         $npmFixed = $true
                     } else {
-                        Write-Host "[ERROR] npm sigue sin funcionar en nueva ubicación" -ForegroundColor Red
+                        Show-Message "[ERROR] npm sigue sin funcionar en nueva ubicación" Error
                     }
 
                 } catch {
-                    Write-Host "[ERROR] No se pudo cambiar nvm root: $_" -ForegroundColor Red
-                    Write-Host ""
-                    Write-Host "   Intenta manualmente:" -ForegroundColor Yellow
-                    Write-Host "   1. Ejecuta PowerShell como Administrador" -ForegroundColor Gray
-                    Write-Host "   2. Ejecuta: nvm root $newNvmRoot" -ForegroundColor Gray
-                    Write-Host "   3. Vuelve a ejecutar este script" -ForegroundColor Gray
+                    Show-Message "[ERROR] No se pudo cambiar nvm root: $_" Error
+                    Show-Message ""
+                    Show-Message "   Intenta manualmente:" Custom -CustomColor Yellow
+                    Show-Message "   1. Ejecuta PowerShell como Administrador" Custom -CustomColor Gray
+                    Show-Message "   2. Ejecuta: nvm root $newNvmRoot" Custom -CustomColor Gray
+                    Show-Message "   3. Vuelve a ejecutar este script" Custom -CustomColor Gray
                 }
             }
         }
@@ -891,11 +921,11 @@ foreach ($version in $nodeVersions) {
 
     # 5.7 Resumen de la versión
     if ($npmFixed) {
-        Write-Host "[ÉXITO] Node.js v$version configurado correctamente" -ForegroundColor Green
+        Show-Message "[ÉXITO] Node.js v$version configurado correctamente" Ok
         $successCount++
     } else {
-        Write-Host "[FALLO] Node.js v$version instalado pero npm no funciona" -ForegroundColor Red
-        Write-Host "Considera cambiar la ubicación de nvm manualmente o ejecutar como admin" -ForegroundColor Yellow
+        Show-Message "[FALLO] Node.js v$version instalado pero npm no funciona" Error
+        Show-Message "Considera cambiar la ubicación de nvm manualmente o ejecutar como admin" Custom -CustomColor Yellow
         $failCount++
     }
 }
@@ -903,12 +933,12 @@ foreach ($version in $nodeVersions) {
 # ========================================
 # 6. RESUMEN FINAL
 # ========================================
-Write-Host ""
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  Resumen Final" -ForegroundColor Cyan
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Versiones procesadas: $($nodeVersions.Count)" -ForegroundColor White
-Write-Host "Exitosas: $successCount" -ForegroundColor Green
-Write-Host "Fallidas: $failCount" -ForegroundColor Red
-Write-Host ""
-Write-Host "Proceso completado." -ForegroundColor Cyan
+Show-Message ""
+Show-Message "========================================" Info
+Show-Message "  Resumen Final" Info
+Show-Message "========================================" Info
+Show-Message "Versiones procesadas: $($nodeVersions.Count)" Custom
+Show-Message "Exitosas: $successCount" Ok
+Show-Message "Fallidas: $failCount" Error
+Show-Message ""
+Show-Message "Proceso completado." Info
