@@ -1,6 +1,6 @@
 # ========================================
 # Script: Instalador y Reparador de Node.js + npm con nvm
-# Versión: 2.0.3
+# Versión: 2.0.5
 # Descripción: Instala versiones de Node.js con nvm y repara npm si está corrupto
 # ========================================
 
@@ -51,14 +51,61 @@ function Get-ValidVersions {
 
     foreach ($v in $versions) {
         if ($v -match '^\d+\.\d+\.\d+$') {
-            $valid += $v
-            Show-Message "Versión válida: $v" Ok
+            try {
+                # Consultar si la versión existe en el registro de Node.js
+                $null = Invoke-RestMethod -Uri "https://registry.npmjs.org/node/$v" -TimeoutSec 10 -ErrorAction Stop
+                Show-Message "Versión válida encontrada en el registro: $v" Ok
+                $valid += $v
+            } catch {
+                Show-Message "La versión $v tiene formato correcto pero no existe en el registro" Advertencia
+            }
         } else {
             Show-Message "Versión inválida: $v" Error
         }
     }
 
     return $valid | Select-Object -Unique
+}
+
+function Get-ValidVersion {
+    param(
+        [string]$Prompt = "Versión de npm a usar si falta",
+        [string]$Example = "Ejemplo: 10.9.4",
+        [string]$Enter = "Enter=latest"
+    )
+
+    Show-Message ""
+    Show-Message $Prompt Info
+    Show-Message $Example Custom -CustomColor Gray
+    Show-Message $Enter Custom -CustomColor Gray
+
+    $input = Read-Host "Versión"
+
+    if ([string]::IsNullOrWhiteSpace($input) -or $input -eq "latest") {
+        Show-Message "Obteniendo última versión de npm..." Info
+        try {
+            $npmLatestInfo = Invoke-RestMethod -Uri "https://registry.npmjs.org/npm/latest" -TimeoutSec 10
+            Show-Message "Última versión de npm: $($npmLatestInfo.version)" Ok
+            return $npmLatestInfo.version
+        } catch {
+            Show-Message "No se pudo obtener la última versión de npm" Error
+            exit 1
+        }
+    }
+
+    if ($input -match '^\d+\.\d+\.\d+$') {
+        try {
+            $npmInfo = Invoke-RestMethod -Uri "https://registry.npmjs.org/npm/$input" -TimeoutSec 10
+            Show-Message "Versión válida de npm encontrada: $input" Ok
+            return $input
+        } catch {
+            Show-Message "La versión $input no existe en el registro de npm" Error
+            exit 1
+        }
+    } else {
+        Show-Message "Versión inválida de npm: $input" Error
+        exit 1
+    }
 }
 
 
@@ -312,38 +359,9 @@ Show-Message "Versiones a procesar: $($nodeVersions -join ', ')" Info
 # ========================================
 # 4. OBTENER VERSIÓN DE NPM
 # ========================================
-Show-Message ""
-$npmVersion = Read-Host "Versión de npm a usar si falta (ej: 10.9.4, Enter=latest)"
-
-if ([string]::IsNullOrCustomSpace($npmVersion)) {
-    Show-Message "  Obteniendo última versión de npm..." Info
-    try {
-        $npmLatestInfo = Invoke-RestMethod -Uri "https://registry.npmjs.org/npm/latest" -TimeoutSec 10
-        $npmVersion = $npmLatestInfo.version
-        Show-Message "  Última version de npm: $npmVersion" Ok
-    } catch {
-        Show-Message "  No se pudo obtener la última versión de npm" Error
-        $npmVersion = Read-Host "Ingresa versión de npm manualmente (ej: 10.9.4)"
-    }
-}
-
-# Validar formato de versión de npm o aceptar 'latest'
-if (-not [string]::IsNullOrCustomSpace($npmVersion)) {
-    if ($npmVersion -eq "latest") {
-        Show-Message "  Usando la última versión de npm (latest)" Info
-        try {
-            $npmLatestInfo = Invoke-RestMethod -Uri "https://registry.npmjs.org/npm/latest" -TimeoutSec 10
-            $npmVersion = $npmLatestInfo.version
-            Show-Message "  Última versión de npm: $npmVersion" Ok
-        } catch {
-            Show-Message "  No se pudo obtener la última versión de npm" Error
-            exit 1
-        }
-    } elseif ($npmVersion -notmatch '^\d+\.\d+\.\d+$') {
-        Show-Message "  Versión de npm inválida: $npmVersion" Error
-        exit 1
-    }
-}
+$npmVersion = Get-ValidVersion -Prompt "Versión de npm a usar si falta" `
+                               -Example "Ejemplo: 10.9.4" `
+                               -Enter "(Enter=latest)"
 
 Show-Message ""
 Show-Message "========================================" Info
