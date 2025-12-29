@@ -119,31 +119,21 @@ $ErrorActionPreference = 'Continue'
 # ========================================
 $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
-Show-Message "========================================" Info
-Show-Message " Instalador de Node.js + npm (nvm)" Info
-Show-Message "========================================" Info
-Show-Message ""
+Show-Message "========================================`nInstalador de Node.js + npm (nvm)`n========================================`n" Info
 
 if (-not $isAdmin) {
-    Show-Message "  Este script NO se está ejecutando como Administrador" Advertencia
-    Show-Message ""
+    Show-Message "  Este script NO se está ejecutando como Administrador`n" Advertencia
     Show-Message "Si necesitas reparar npm corrupto, se requieren permisos elevados" Advertencia
-    Show-Message "para modificar archivos en C:\ProgramData\NVM\" Custom -CustomColor Gray
-    Show-Message ""
+    Show-Message "para modificar archivos en C:\ProgramData\NVM\`n" Custom -CustomColor Gray
     $continue = Read-Host "¿continuar de todos modos? (S/N, Enter=No)"
     if ($continue -ne "S" -and $continue -ne "s") {
-        Show-Message ""
-        Show-Message "Para ejecutar como Administrador:" Info
-        Show-Message "1. Click derecho en PowerShell" Custom -CustomColor Gray
-        Show-Message "2. Selecciona 'Ejecutar como administrador" Custom -CustomColor Gray
-        Show-Message "3. Ejecuta este script nuevamente" Custom -CustomColor Gray
-        Show-Message ""
+        Show-Message "`nPara ejecutar como Administrador:" Info
+        Show-Message "1. Click derecho en PowerShell`n2. Selecciona 'Ejecutar como administrador`n3. Ejecuta este script nuevamente`n" Custom -CustomColor Gray
         exit 0
     }
     Show-Message ""
 } else {
-    Show-Message "  Ejecutando con permisos de Administrador" Ok
-    Show-Message ""
+    Show-Message "  Ejecutando con permisos de Administrador`n" Ok
 }
 
 # ========================================
@@ -287,31 +277,18 @@ try {
     $hasWritePermissions = $true
     Show-Message "  Tienes permisos de escritura en la ubicacion de nvm" Ok
 } catch {
-    Show-Message "  No tienes permisos de escritura en: $nvmBase" Advertencia
-    Show-Message ""
+    Show-Message "  No tienes permisos de escritura en: $nvmBase`n" Advertencia
     Show-Message "LIMITACIONES DETECTADAS:" Error
-    Show-Message "- No podrás reparar instalaciones corruptas de npm" Custom -CustomColor Gray 
-    Show-Message "- No podrás desinstalar versiones de Node.js" Custom -CustomColor Gray
-    Show-Message "- Solo podrás verificar versiones existentes" Custom -CustomColor Gray
-    Show-Message ""
+    Show-Message "`t- No podrás reparar instalaciones corruptas de npm`n`t- No podrás desinstalar versiones de Node.js`n`t- Solo podrás verificar versiones existentes`n" Custom -CustomColor Gray 
     Show-Message "OPCIONES DISPONIBLES:" Info
-    Show-Message "1. Contactar al administrador de IT para:" Custom -CustomColor Gray
-    Show-Message "    - Cambiar permisos de la carpeta nvm" Custom -CustomColor Gray
-    Show-Message "    - Cambiar nvm root a tu carpeta de usuario" Custom -CustomColor Gray
-    Show-Message "    - Ejecutar este script como administrador" Custom -CustomColor Gray
-    Show-Message "2. Usar otra PC/ambiente con permisos completos" Custom -CustomColor Gray
-    Show-Message "3. Continuar solo para verificar versiones existentes (sin reparaciones)" Custom -CustomColor Gray
-    Show-Message ""
+    Show-Message "1. Contactar al administrador de IT para:`n`t- Cambiar permisos de la carpeta nvm`n`t- Cambiar nvm root a tu carpeta de usuario`n`t- Ejecutar este script como administrador`n2. Usar otra PC/ambiente con permisos completos○`n3. Continuar solo para verificar versiones existentes (sin reparaciones)`n" Custom -CustomColor Gray
     $continuar = Read-Host "¿Deseas continuar de todos modos? (S/N, Enter=No)"
     if ($continuar -ne "S" -and $continuar -ne "s") {
-        Show-Message ""
-        Show-Message "Script cancelado. Para usar todas las funcionalidades:" Advertencia
-        Show-Message "- Solicita permisos de administrador" Custom -CustomColor Gray
-        Show-Message "- o pide que cambien nvm root a: $env:USERPROFILE\nvm" Custom -CustomColor Gray
+        Show-Message "`nScript cancelado. Para usar todas las funcionalidades:" Advertencia
+        Show-Message "`t- Solicita permisos de administrador`n`t- o pide que cambien nvm root a: $env:USERPROFILE\nvm" Custom -CustomColor Gray
         exit 0
     }
-    Show-Message ""
-    Show-Message "  Continuando en modo limitado (solo verificación)..." Info
+    Show-Message "  `nContinuando en modo limitado (solo verificación)..." Info
 }
 
 # ========================================
@@ -337,8 +314,7 @@ if (Test-Path ".nvmrc") {
 
 # Opción 2: Ingresar versiones manualmente
 if ($nodeVersions.Count -eq 0) {
-    Show-Message ""
-    Show-Message "No se usó .nvmrc o no existe." Advertencia
+    Show-Message "`nNo se usó .nvmrc o no existe." Advertencia
 }
 
 $nodeVersions = Get-ValidVersions -Prompt "Ingresa versiones adicionales de Node.js separadas por coma" `
@@ -353,8 +329,7 @@ if ($nodeVersions.Count -eq 0) {
 # Eliminar duplicados
 $nodeVersions = $nodeVersions | Select-Object -Unique
 
-Show-Message ""
-Show-Message "Versiones a procesar: $($nodeVersions -join ', ')" Info
+Show-Message "`nVersiones a procesar: $($nodeVersions -join ', ')" Info
 
 # ========================================
 # 4. OBTENER VERSIÓN DE NPM
@@ -363,10 +338,7 @@ $npmVersion = Get-ValidVersion -Prompt "Versión de npm a usar si falta" `
                                -Example "Ejemplo: 10.9.4" `
                                -Enter "(Enter=latest)"
 
-Show-Message ""
-Show-Message "========================================" Info
-Show-Message " Iniciando procesamiento..." Info
-Show-Message "========================================" Info
+Show-Message "`n========================================`nIniciando procesamiento...`n========================================`n" Info
 
 # ========================================
 # 5. PROCESAR CADA VERSIÓN
@@ -375,10 +347,9 @@ $successCount = 0
 $failCount = 0
 
 foreach ($version in $nodeVersions) {
-    Show-Message ""
-    Show-Message "" Custom -CustomColor DarkGray
+    Show-Message "`n========================================" Custom -CustomColor DarkGray
     Show-Message "Procesando Node.js v$version..." Advertencia
-    Show-Message "" Custom -CustomColor DarkGray
+    Show-Message "========================================`n" Custom -CustomColor DarkGray
 
     $nodePath = "$nvmBase\v$version"
     $nodeInstalled = Test-Path $nodePath
@@ -444,19 +415,12 @@ foreach ($version in $nodeVersions) {
                     Show-Message "   Instalacion completada (verificación final)" Ok
                     $nodeInstalled = $true
                 } else {
-                    Show-Message "  La instalación no completó en el tiempo esperado" Error
-                    Show-Message ""
-                    Show-Message "IMPORTANTE:" Advertencia
-                    Show-Message "La instalación de Node.js v$version puede seguir en proceso en segundo plano." Advertencia
-                    Show-Message ""
+                    Show-Message "  La instalación no completó en el tiempo esperado`n" Error
+                    Show-Message "IMPORTANTE:nLa instalación de Node.js v$version puede seguir en proceso en segundo plano.`n" Advertencia
                     Show-Message "SOLUCIÓN:" Info
-                    Show-Message "1. Espera 2-3 minutos para que termina la descarga/instalación" Custom -CustomColor Gray
-                    Show-Message "2. Ejecuta este script nuevamente: .\install_npm_version_v2.ps1" Custom -CustomColor Gray
-                    Show-Message "3. El script detectará si la instalación se completó y continuará" Custom -CustomColor Gray
-                    Show-Message ""
+                    Show-Message "1. Espera 2-3 minutos para que termina la descarga/instalación`n2. Ejecuta este script nuevamente: .\install_npm_version_v2.ps1`n3. El script detectará si la instalación se completó y continuará`n" Custom -CustomColor Gray
                     Show-Message "Alternativamente, verífica manualmente con:" Custom -CustomColor Gray
-                    Show-Message "  nvm list" Custom
-                    Show-Message ""
+                    Show-Message "  nvm list`n" Custom
                     $failCount++
                     continue
                 }
@@ -512,16 +476,9 @@ foreach ($version in $nodeVersions) {
         # Verificar si tenemos permisos antes de intentar reparar
         if (-not $hasWritePermissions) {
             Show-Message "-[BLOQUEADO] No se puede reparar npm sin permisos de escritura" Error
-            Show-Message "Esta versión está corrupta y la ubicación de nvm está protegida" Advertencia
-            Show-Message ""
+            Show-Message "Esta versión está corrupta y la ubicación de nvm está protegida`n" Advertencia
             Show-Message "SOLUCIONES:" Info
-            Show-Message "1. Contacta al administrador de IT para:" Custom -CustomColor Gray
-            Show-Message "    - Desinstalar manualmente: $nodePath" Custom -CustomColor Gray
-            Show-Message "    - Reinstalar Node.js v$version limpio" Custom -CustomColor Gray
-            Show-Message "    - O cambia nvm root a tu carpeta de usuario" Custom -CustomColor Gray
-            Show-Message "2. Ejecuta este script como Administrador" Custom -CustomColor Gray
-            Show-Message "3. Usa una pc con permisos completos" Custom -CustomColor Gray
-            Show-Message ""
+            Show-Message "1. Contacta al administrador de IT para:`n`t- Desinstalar manualmente: $nodePath`n`t- Reinstalar Node.js v$version limpio`n`t- O cambia nvm root a tu carpeta de usuario`n2. Ejecuta este script como Administrador`n3. Usa una pc con permisos completos`n" Custom -CustomColor Gray
             $failCount++
             continue
         }
@@ -670,19 +627,14 @@ foreach ($version in $nodeVersions) {
         } catch {
             Show-Message "  No se pudo reparar npm: $_" Error
             if ($_ -match "Permisos insuficientes") {
-                Show-Message ""
-                Show-Message "   SOLUCIÓN:" Advertencia
-                Show-Message "   1. Ejecuta PowerShell como Administrador" Custom -CustomColor Gray
-                Show-Message "   2. Vuelve a ejecutar este script" Custom -CustomColor Gray
-                Show-Message ""
+                Show-Message "   `nSOLUCIÓN:`n`t1. Ejecuta PowerShell como Administrador`n`t2. Vuelve a ejecutar este script`n" Advertencia
             }
         }
     }
     
     # 5.5 última alternativa: Reinstalar Node.js completo si npm no funciona
     if (-not $npmFixed -and $hasWritePermissions) {
-        Show-Message ""
-        Show-Message "-[ÚLTIMA OPCIÓN] Intentando reinstalar Node.js v$version completamente..." Custom -CustomColor Magenta
+        Show-Message "`n-[ÚLTIMA OPCIÓN] Intentando reinstalar Node.js v$version completamente..." Custom -CustomColor Magenta
 
         try {
             # Desinstalar versión actual
@@ -795,8 +747,7 @@ foreach ($version in $nodeVersions) {
             $npmVer = & $npmCmd -v 2>&1
 
             if ($LASTEXITCODE -eq 0 -and $npmVer -match "^\d+\.\d+\.\d+") {
-                Show-Message "-[ÉXITO] npm ahora funciona correctamente: v$npmVer" Ok
-                Show-Message "-[ÉXITO] Node.js v$version reinstalado y configurado exitosamente" Ok
+                Show-Message "-[ÉXITO] npm ahora funciona correctamente: v$npmVer`n-[ÉXITO] Node.js v$version reinstalado y configurado exitosamente" Ok
                 $npmFixed = $true
             } else {
                 Show-Message "  No se pudo reinstalar Node.js v$version" Error
@@ -804,13 +755,9 @@ foreach ($version in $nodeVersions) {
             }
 
         } catch {
-            Show-Message "  No se pudo reinstalar Node.js v$version" Error
-            Show-Message "   Detalles: $_" Error
-            Show-Message ""
+            Show-Message "  No se pudo reinstalar Node.js v$version`n`tDetalles: $_`n" Error
             Show-Message "   Intenta manualmente:" Advertencia
-            Show-Message "   nvm uninstall $version" Custom -CustomColor Gray
-            Show-Message "   nvm install $version" Custom -CustomColor Gray
-            Show-Message "   nvm use $version" Custom -CustomColor Gray
+            Show-Message "   nvm uninstall $version`n`tnvm install $version`n`tnvm use $version`n" Custom -CustomColor Gray
         }
     }
 
@@ -824,22 +771,14 @@ foreach ($version in $nodeVersions) {
             Show-Message "-[OPCIÓN FINAL] npm corrupto en ubicación sin permisos" Error
             Show-Message "No se puede reparar sin permisos de escritura en: $nvmBase" Advertencia
         }
-        Show-Message ""
-        Show-Message "Ubicación actual de nvm: $nvmBase" Custom -CustomColor Gray
-        Show-Message ""
-        Show-Message "¿Deseas cambiar nvm a una ubicación con permisos completos?" Info
-        Show-Message "Recomendado: $env:USERPROFILE\nvm (tu carpeta de usuario)" Custom -CustomColor Gray
-        Show-Message ""
+        Show-Message "`nUbicación actual de nvm: $nvmBase" Custom -CustomColor Gray
+        Show-Message "`n¿Deseas cambiar nvm a una ubicación con permisos completos?" Info
+        Show-Message "Recomendado: $env:USERPROFILE\nvm (tu carpeta de usuario)`n" Custom -CustomColor Gray
         $cambiarRoot = Read-Host "¿Cambiar ubicación de nvm? (S/N, Enter=No)"
 
         if ($cambiarRoot -eq "S" -or $cambiarRoot -eq "s") {
-            Show-Message ""
-            Show-Message "Ingresa la NUEVA ubicación para nvm:" Info
-            Show-Message "Ejemplos:" Custom -CustomColor Gray
-            Show-Message "  - $env:USERPROFILE\nvm" Custom -CustomColor Gray
-            Show-Message "  - $env:LOCALAPPDATA\nvm" Custom -CustomColor Gray
-            Show-Message "  - C:\Dev\nvm" Custom -CustomColor Gray
-            Show-Message ""
+            Show-Message "`nIngresa la NUEVA ubicación para nvm:" Info
+            Show-Message "Ejemplos:`n`t- $env:USERPROFILE\nvm`n`t- $env:LOCALAPPDATA\nvm`n`t- C:\Dev\nvm`n" Custom -CustomColor Gray
             $newNvmRoot = Read-Host "Nueva ruta"
 
             if (-not [string]::IsNullOrCustomSpace($newNvmRoot)) {
@@ -881,8 +820,7 @@ foreach ($version in $nodeVersions) {
                     }
 
                     Show-Message "   nvm root cambiado exitosamente" Ok
-                    Show-Message "   Salida: $nvmRootOutput" Custom -CustomColor Gray
-                    Show-Message ""
+                    Show-Message "   Salida: $nvmRootOutput`n" Custom -CustomColor Gray
 
                     # Actualizar variables para próximas versiones
                     $nvmBase = $newNvmRoot
@@ -897,8 +835,7 @@ foreach ($version in $nodeVersions) {
                     Show-Message "   Intentado desinstalar de ubicación anterior..." Custom -CustomColor Gray
                     nvm uninstall $version 2>&1 | Out-Null
                     if ($LASTEXITCODE -ne 0) {
-                        Show-Message "   No se pudo desinstalar de ubicación anterior (sin permisos)" Custom -CustomColor Gray
-                        Show-Message "   La versión corrupta quedará en: $(Split-Path $nodePath -Parent)" Custom -CustomColor Gray
+                        Show-Message "   No se pudo desinstalar de ubicación anterior (sin permisos)`n`tLa versión corrupta quedará en: $(Split-Path $nodePath -Parent)" Custom -CustomColor Gray
                     }
                     Start-Sleep -Seconds 2
 
@@ -935,20 +872,16 @@ foreach ($version in $nodeVersions) {
                     $npmVer = & $npmCmd -v 2>&1
 
                     if ($LASTEXITCODE -eq 0 -and $npmVer -match "^\d+\.\d+\.\d+") {
-                        Show-Message "-[ÉXITO] Node.js v$version isntalado correctamente en nueva ubicación" Ok
-                        Show-Message "-[ÉXITO] npm funciona: v$npmVer" Ok
+                        Show-Message "-[ÉXITO] Node.js v$version isntalado correctamente en nueva ubicación`n-[ÉXITO] npm funciona: v$npmVer" Ok
                         $npmFixed = $true
                     } else {
                         Show-Message "  npm sigue sin funcionar en nueva ubicación" Error
                     }
 
                 } catch {
-                    Show-Message "  No se pudo cambiar nvm root: $_" Error
-                    Show-Message ""
+                    Show-Message "  No se pudo cambiar nvm root: $_`n" Error
                     Show-Message "   Intenta manualmente:" Advertencia
-                    Show-Message "   1. Ejecuta PowerShell como Administrador" Custom -CustomColor Gray
-                    Show-Message "   2. Ejecuta: nvm root $newNvmRoot" Custom -CustomColor Gray
-                    Show-Message "   3. Vuelve a ejecutar este script" Custom -CustomColor Gray
+                    Show-Message "   1. Ejecuta PowerShell como Administrador`n`t2. Ejecuta: nvm root $newNvmRoot`n`t3. Vuelve a ejecutar este script" Custom -CustomColor Gray
                 }
             }
         }
@@ -968,12 +901,8 @@ foreach ($version in $nodeVersions) {
 # ========================================
 # 6. RESUMEN FINAL
 # ========================================
-Show-Message ""
-Show-Message "========================================" Info
-Show-Message "  Resumen Final" Info
-Show-Message "========================================" Info
+Show-Message "`n========================================`nResumen Final`n========================================" Info
 Show-Message "Versiones procesadas: $($nodeVersions.Count)" Custom
 Show-Message "Exitosas: $successCount" Ok
-Show-Message "Fallidas: $failCount" Error
-Show-Message ""
+Show-Message "Fallidas: $failCount`n" Error
 Show-Message "Proceso completado." Info
