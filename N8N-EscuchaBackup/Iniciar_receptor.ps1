@@ -1,0 +1,1 @@
+Start-Process powershell.exe -ArgumentList "-File E:\Scripts-Powershell\N8N-EscuchaBackup\ReceptorBackUp.ps1" -WindowStyle Hidden
